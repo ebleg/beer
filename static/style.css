@@ -1,0 +1,15 @@
+* {
+    font-family: 'Fira Sans', sans-serif;
+    color: #2c3e50;
+}
+
+#title {
+    text-align: center;
+    font-weight: 700;
+}
+
+#quote {
+    font-weight: 200;
+    font-style: italic;
+    text-align: center
+}

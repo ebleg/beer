@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zuipen nerds!</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
+
+    <!-- Style sheet -->
+    <link rel="stylesheet" type="text/css" href="../../static/style.css">
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Google fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,300;0,700;0,900;1,200;1,300&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div style="padding: 25px">
+        <h1 id="title">ZUIPEN NERDS!</h1>
+        <p id="quote">"{{ trump_quote }}"</p>
+    </div>
+
+    {%  block content %}
+
+    <div class="container">
+        <div class="row row-cols-lg-3 row-cols-sm-1 row-cols-md-2">
+
+            {%  for member in member_info %}
+                <div class="col text-center">
+                    <div class="card" style="width: 18rem; margin: 15px">
+
+                        <div class="card-header">
+                          {{ member.nickName }}
+                        </div>
+                        <div class="card-body row">
+                            <div style="text-align: center" class="col">
+                                <div class="justify-content-center" align="center" id="crate-{{ member.id }}">
+                                    <!-- automatic table here -->
+                                </div>
+                            </div>
+
+                            <div class="col-3" role="group" style="padding-left: 10px">
+                                <div class="btn-group-vertical">
+                                    <button type="button" class="btn btn-info"
+                                            onclick="changeBeer({{ member.id }}, 1)">
+                                        <i class="bi bi-arrow-up-short" style="color: white"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info"
+                                            onclick="changeBeer({{ member.id }}, -1)">
+                                        <i class="bi bi-arrow-down-short" style="color: white"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info" onclick="buildModal({{ member.id }})">
+                                        <i class="bi bi-graph-up" style="color: white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            {%  endfor %}
+            <div id="memberModal" class="modal fade" tabindex="-1">
+               <div class="modal-dialog">
+                   <div class="modal-content">
+                       <div class="modal-header">
+                           <h4 id="modalTitle" style="font-weight: bold"></h4>
+                       </div>
+                       <div class="modal-body">
+                           <div class="row row-cols-3 text-center">
+                               <div class="col">Dag</div>
+                               <div class="col">Week</div>
+                               <div class="col">Maand</div>
+
+                               <div id="modalDaily" class="col"><h2></h2></div>
+                               <div id="modalWeekly" class="col"><h2></h2></div>
+                               <div id="modalMonthly" class="col"><h2></h2></div>
+                           </div>
+                           <div id="modalTable">
+
+                           </div>
+                       </div>
+                   </div>
+               </div>
+            </div>
+        </div>
+
+    {% endblock %}
+    </div>
+
+    {% block javascript %}
+    <script>
+
+        function buildTable(n) {
+            // Function to generate HTML for the crate diagrams based on total # of beers outstanding (n)
+            let i, j;
+            let count = 0;
+            let table = "<table>";
+            let full = '<i class="bi bi-record-fill"></i>';  // Requires Bootstrap symbols loaded
+            n = n % 24;
+            for (i = 0; i < 4; i++) {
+                table += "<tr>";
+                for (j = 0; j < 6; j++) {
+                    if (count < n) {
+                        table += '<td>' + full + '</td>';
+                    } else {
+                        table += '<td></td>';
+                    }
+                    count++;
+                }
+                table += "</tr>";
+            }
+            table += "</table>";
+
+            return table
+        }
+
+        let member_ids = {{ member_ids }};
+
+        // Idea: perhaps a more general ajax call can be made to get all the info?
+
+        member_ids.forEach ( function(id) {
+                $.ajax({ // AJAX call to get number of beers outstanding
+                    url: '/info/',
+                    type: 'GET',
+                    data: {
+                        'member_id': id,
+                    },
+                    success: function (data) {
+                        // Update HTML
+                        document.getElementById('crate-' + id).innerHTML = buildTable(data.beer_outstanding);
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+            }
+        )
+
+        // Copy paste from some tutorial, otherwise Django will not allow the request for safety reasons
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        // Function to adjust beers
+        function changeBeer(member_id, amount) {
+            $.ajax({  // ajax call to POST change in beer
+                url: '/adjust/',
+                type: 'POST',
+                data: {
+                    'member_id': member_id,
+                    'amount': amount,
+                },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                },
+                success: function (data) {
+                    document.getElementById('crate-' + member_id).innerHTML = buildTable(data.beer_outstanding)
+                },
+                error: function (error) {
+                    console.log(error);
+                }
+            });
+        }
+
+        function buildModal(member_id) {
+            $('#memberModal').modal('toggle')
+            $.ajax({
+                url: '/info/',
+                type: 'GET',
+                data: {
+                    'member_id': member_id,
+                },
+                success: function (data) {
+                    // Fill in header
+                    document.getElementById("modalTitle").innerText = data.name;
+                    document.getElementById("modalDaily").innerText = data.daily;
+                    document.getElementById("modalWeekly").innerText = data.weekly;
+                    document.getElementById("modalMonthly").innerText = data.monthly;
+
+                    // Build table
+                    let table = "<table>";
+                    for (i=0; i<data.recent.length; i++) {
+                        table += "<tr><td>" + data.recent[i].stamp + "</td></tr>";
+                    }
+                    table += "</table>";
+                    document.getElementById("modalTable").innerHTML = table;
+                },
+                error: function(error) {
+                    console.log("Something went wrong while loading the data for the modal.");
+                }
+
+            });
+        }
+
+    </script>
+    {% endblock %}
+</body>
+</html>
